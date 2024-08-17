@@ -29,8 +29,25 @@ def get_movie_details(title):
         return None, None
     
 def parse_openai_response(response_text):
+    # Regex to match individual recommendations
     pattern = r'\d+\.\s"([^"]+)"\son\s([^\s]+)\s-\s(.+?)$'
-    matches = re.findall(pattern, response_text, re.MULTILINE)
+    
+    # Split the response into lines for easier manipulation
+    lines = response_text.strip().split('\n')
+    
+    # Find the first line that matches the recommendation pattern
+    start_idx = next((i for i, line in enumerate(lines) if re.match(pattern, line)), None)
+    # Find the last line that matches the recommendation pattern
+    end_idx = next((i for i in reversed(range(len(lines))) if re.match(pattern, lines[i])), None)
+    
+    # Extract preamble, recommendations, and postamble
+    preamble = "\n".join(lines[:start_idx]).strip()
+    recommendations_text = "\n".join(lines[start_idx:end_idx+1]).strip()
+    postamble = "\n".join(lines[end_idx+1:]).strip() if end_idx is not None and end_idx + 1 < len(lines) else ""
+    
+    # Parse the recommendations using regex
+    matches = re.findall(pattern, recommendations_text, re.MULTILINE)
+    
     parsed_results = []
     for match in matches:
         title, streaming_service, description = match
@@ -39,7 +56,8 @@ def parse_openai_response(response_text):
             'streaming_service': streaming_service,
             'description': description
         })
-    return parsed_results
+    
+    return preamble, parsed_results, postamble
 
 st.title("What Should I Watch?")
 
@@ -68,7 +86,11 @@ if st.button("Get Recommendation"):
         model="gpt-3.5-turbo",
     )   
     response_text = chat_completion.choices[0].message.content
-    parsed_results = parse_openai_response(response_text)
+    print(response_text)
+    preamble, parsed_results, postamble = parse_openai_response(response_text)
+
+    # Display the preamble
+    st.write(preamble)
 
     # Display each recommendation with cover art and Rotten Tomatoes score
     for result in parsed_results:
@@ -89,3 +111,6 @@ if st.button("Get Recommendation"):
             else:
                 st.text("Rotten Tomatoes Score: Not available")
             st.write(description)
+    
+    # Display the postamble
+    st.write(postamble)
