@@ -24,7 +24,7 @@ def get_movie_details(title):
         for rating in data.get('Ratings', []):
             print(rating['Source'])
             print(rating['Value'])
-            if rating['Source'] == 'Rotten Tomatoes':
+            if rating['Source'] == 'Internet Movie Database':
                 rotten_score = rating['Value']
                 break
         return cover_url, rotten_score
@@ -73,11 +73,12 @@ content_type = st.selectbox(
 additional_info = st.text_area("Anything else you'd like to share?", placeholder='Ideally something made in the last 10 years. I like A24 movies.')
 
 if st.button("Get Recommendation"):
+    
     genre_str = genres if genres != '' else "any"
     streaming_service_str = streaming_services if streaming_services != "" else "any streaming service"
     content_type_str = content_type if content_type in ('TV Shows','Movies') else "TV shows or movies"
     
-    prompt = f"I like {genre_str} {content_type_str} and I have access to {streaming_service_str}. {additional_info}. Please provide 4 options on what I should watch. Also provide a short witty preamble to the options that marries what I said to the suggestions, and specify which service the titles are on (i.e. 1. Title on streaming_service - additional info). Also include a light postamble."
+    prompt = f"I like {genre_str} {content_type_str} and I have access to {streaming_service_str}. {additional_info}. Please provide 4 options on what I should watch. Also provide a short witty preamble to the options that marries what I said to the suggestions, and specify which service the titles are on (i.e. 1. \"Title\" on streaming_service - additional info). Also include a light postamble. Don't use any asterisks in response. Make sure the streaming service is only one word, so you can just say Prime or Max. And confirm that the streaming platform is one of the ones I mentioned in the beginning of this request. Also please make sure you provide the additional info on each title."
     
     chat_completion = client.chat.completions.create(
         messages=[
@@ -91,10 +92,12 @@ if st.button("Get Recommendation"):
     response_text = chat_completion.choices[0].message.content.replace('HBO Max','Max')
     print(response_text)
     preamble, parsed_results, postamble = parse_openai_response(response_text)
-
+    st.write('')
+    st.markdown('---')
+    st.write('')
     # Display the preamble
     st.write(preamble)
-
+    st.write('')
     # Display each recommendation with cover art and Rotten Tomatoes score
     for result in parsed_results:
         title = result['title']
@@ -111,10 +114,10 @@ if st.button("Get Recommendation"):
         with col2:
             st.subheader(title)
             if rotten_score:
-                st.text(f"{service} - Rotten Tomatoes Score: {rotten_score}")
+                st.text(f"{service} - IMDB Score: {rotten_score}")
             else:
                 st.text("Rotten Tomatoes Score: Not available")
             st.write(description)
-    
+    st.write('')
     # Display the postamble
     st.write(postamble)
