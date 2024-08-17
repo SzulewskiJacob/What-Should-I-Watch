@@ -5,12 +5,12 @@ import requests
 import re
 
 client = OpenAI(
-    api_key=os.getenv('OPENAI_KEY'),
+    api_key=st.secrets['OPENAI_KEY'],
 )
 
 def get_movie_details(title):
     print(title)
-    omdb_api_key = os.getenv('OMDB_KEY')
+    omdb_api_key = st.secrets['OMDB_KEY']
     params = {
         't': title,
         'apikey': omdb_api_key,
@@ -78,7 +78,11 @@ if st.button("Get Recommendation"):
     streaming_service_str = streaming_services if streaming_services != "" else "any streaming service"
     content_type_str = content_type if content_type in ('TV Shows','Movies') else "TV shows or movies"
     
-    prompt = f"I like {genre_str} {content_type_str} and I have access to {streaming_service_str}. {additional_info}. Please provide 4 options on what I should watch. Also provide a short witty preamble to the options that marries what I said to the suggestions, and specify which service the titles are on (i.e. 1. \"Title\" on streaming_service - additional info). Also include a light postamble. Don't use any asterisks in response. Make sure the streaming service is only one word, so you can just say Prime or Max. And confirm that the streaming platform is one of the ones I mentioned in the beginning of this request. Also please make sure you provide the additional info on each title."
+    prompt = f"I like {genre_str} {content_type_str} and I have access to {streaming_service_str}. {additional_info}." + ''' 
+    Please provide 4 options on what I should watch. Also provide a short witty preamble to the options that marries what I said to the suggestions, 
+    and specify which service the titles are on (i.e. 1. \"Title\" on streaming_service - additional info). Also include a light postamble. 
+    Don't use any asterisks in response. Make sure the streaming service is only one word, so you can just say Prime or Max. And confirm that the 
+    streaming platform is one of the ones I mentioned in the beginning of this request. Also please make sure you provide the additional info on each title.'''
     
     chat_completion = client.chat.completions.create(
         messages=[
