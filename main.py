@@ -8,34 +8,20 @@ client = OpenAI(
 
 st.title("What Should I Watch?")
 
-# Multiselect options for genres
-genres = st.multiselect(
-    "Select your favorite genres",
-    ["Action", "Comedy", "Drama", "Horror", "Romance", "Sci-Fi", "Fantasy", "Documentary", "Thriller", "Animation"]
-)
-
-# Multiselect options for streaming services
-streaming_services = st.multiselect(
-    "Which streaming services do you have access to?",
-    ["Netflix", "Hulu", "Amazon Prime Video", "Disney+", "HBO Max", "Apple TV+", "Peacock", "Paramount+", "YouTube"]
-)
-
-# Multiselect for TV or Movie preference
+genres = st.text_input("Which genres sound interesting to you?", placeholder='horror, documentaries, maybe fast-paced')
+streaming_services = st.text_input("Which streaming services do you have access to?", placeholder="Max, Hulu, Netflix, I'd rent something too")
 content_type = st.multiselect(
-    "Are you looking for TV shows, movies, or both?",
-    ["TV Shows", "Movies", "Both"]
+    "TV Show? Movie? You can select both.",
+    ["TV Shows", "Movies"]
 )
-
-# Additional information text area
-additional_info = st.text_area("Anything else you'd like to share?")
+additional_info = st.text_area("Anything else you'd like to share?", placeholder='Ideally something made in the last 10 years. I really like anything A24. Oh and this is for a movie night with college friends.')
 
 if st.button("Get Recommendation"):
-    # Formatting the prompt with selected options
-    genre_str = ", ".join(genres) if genres else "any"
-    streaming_service_str = ", ".join(streaming_services) if streaming_services else "any streaming service"
+    genre_str = genres if genres != '' else "any"
+    streaming_service_str = streaming_services if streaming_services != "" else "any streaming service"
     content_type_str = ", ".join(content_type) if content_type else "TV shows or movies"
     
-    prompt = f"I like {genre_str} {content_type_str} and I have access to {streaming_service_str}. {additional_info}. Please help me pick something to watch."
+    prompt = f"I like {genre_str} {content_type_str} and I have access to {streaming_service_str}. {additional_info}. Please provide 4 options on what I should watch."
     
     chat_completion = client.chat.completions.create(
         messages=[
