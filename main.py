@@ -9,6 +9,7 @@ client = OpenAI(
 )
 
 def get_movie_details(title):
+    print(title)
     omdb_api_key = os.getenv('OMDB_KEY')
     params = {
         't': title,
@@ -21,6 +22,8 @@ def get_movie_details(title):
         cover_url = data.get('Poster')
         rotten_score = None
         for rating in data.get('Ratings', []):
+            print(rating['Source'])
+            print(rating['Value'])
             if rating['Source'] == 'Rotten Tomatoes':
                 rotten_score = rating['Value']
                 break
@@ -74,7 +77,7 @@ if st.button("Get Recommendation"):
     streaming_service_str = streaming_services if streaming_services != "" else "any streaming service"
     content_type_str = content_type if content_type in ('TV Shows','Movies') else "TV shows or movies"
     
-    prompt = f"I like {genre_str} {content_type_str} and I have access to {streaming_service_str}. {additional_info}. Please provide 4 options on what I should watch. Also provide a short witty preamble to the options that marries what I said to the suggestions."
+    prompt = f"I like {genre_str} {content_type_str} and I have access to {streaming_service_str}. {additional_info}. Please provide 4 options on what I should watch. Also provide a short witty preamble to the options that marries what I said to the suggestions, and specify which service the titles are on (i.e. 1. Title on streaming_service - additional info). Also include a light postamble."
     
     chat_completion = client.chat.completions.create(
         messages=[
@@ -85,7 +88,7 @@ if st.button("Get Recommendation"):
         ],
         model="gpt-3.5-turbo",
     )   
-    response_text = chat_completion.choices[0].message.content
+    response_text = chat_completion.choices[0].message.content.replace('HBO Max','Max')
     print(response_text)
     preamble, parsed_results, postamble = parse_openai_response(response_text)
 
@@ -96,6 +99,7 @@ if st.button("Get Recommendation"):
     for result in parsed_results:
         title = result['title']
         description = result['description']
+        service = result['streaming_service']
         cover_url, rotten_score = get_movie_details(title)
         
         col1, col2 = st.columns([1, 3])
@@ -107,7 +111,7 @@ if st.button("Get Recommendation"):
         with col2:
             st.subheader(title)
             if rotten_score:
-                st.text(f"Rotten Tomatoes Score: {rotten_score}")
+                st.text(f"{service} - Rotten Tomatoes Score: {rotten_score}")
             else:
                 st.text("Rotten Tomatoes Score: Not available")
             st.write(description)
