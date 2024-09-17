@@ -16,7 +16,7 @@ def get_movie_details(title):
         'apikey': omdb_api_key,
         'plot': 'short'
     }
-    response = requests.get('http://www.omdbapi.com/', params=params)
+    response = requests.get('https://www.omdbapi.com/', params=params)
     data = response.json()
     if response.status_code == 200 and data.get('Response') == 'True':
         cover_url = data.get('Poster')
@@ -27,10 +27,19 @@ def get_movie_details(title):
             if rating['Source'] == 'Internet Movie Database':
                 rotten_score = rating['Value']
                 break
-        return cover_url, rotten_score
+        # Fetch image data
+        cover_data = None
+        if cover_url and cover_url != 'N/A':
+            try:
+                image_response = requests.get(cover_url)
+                if image_response.status_code == 200:
+                    cover_data = image_response.content
+            except Exception as e:
+                print(f"Error fetching image: {e}")
+        return cover_data, rotten_score
     else:
         return None, None
-    
+
 def parse_openai_response(response_text):
     # Regex to match individual recommendations
     pattern = r'\d+\.\s"([^"]+)"\son\s([^\s]+)\s-\s(.+?)$'
@@ -80,7 +89,7 @@ if st.button("Get Recommendation"):
     
     prompt = f"I like {genre_str} {content_type_str} and I have access to {streaming_service_str}. {additional_info}." + ''' 
     Please provide 4 options on what I should watch. Also provide a short witty preamble to the options that marries what I said to the suggestions, 
-    and specify which service the titles are on (i.e. 1. \"Title\" on streaming_service - additional info). Also include a light postamble. 
+    and specify which service the titles are on (i.e. 1. "Title" on streaming_service - additional info). Also include a light postamble. 
     Don't use any asterisks in response. Make sure the streaming service is only one word, so you can just say Prime or Max. And confirm that the 
     streaming platform is one of the ones I mentioned in the beginning of this request. Also please make sure you provide the additional info on each title.'''
     
@@ -102,17 +111,17 @@ if st.button("Get Recommendation"):
     # Display the preamble
     st.write(preamble)
     st.write('')
-    # Display each recommendation with cover art and Rotten Tomatoes score
+    # Display each recommendation with cover art and IMDB score
     for result in parsed_results:
         title = result['title']
         description = result['description']
         service = result['streaming_service']
-        cover_url, rotten_score = get_movie_details(title)
+        cover_data, rotten_score = get_movie_details(title)
         
         col1, col2 = st.columns([1, 3])
         with col1:
-            if cover_url:
-                st.image(cover_url, width=100)
+            if cover_data:
+                st.image(cover_data, width=100)
             else:
                 st.text("Cover art not found")
         with col2:
@@ -120,7 +129,7 @@ if st.button("Get Recommendation"):
             if rotten_score:
                 st.text(f"{service} - IMDB Score: {rotten_score}")
             else:
-                st.text("Rotten Tomatoes Score: Not available")
+                st.text(f"{service} - IMDB Score: Not available")
             st.write(description)
     st.write('')
     # Display the postamble
