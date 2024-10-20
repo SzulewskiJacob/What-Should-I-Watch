@@ -74,7 +74,7 @@ def parse_openai_response(response_text):
     return preamble, parsed_results, postamble
 
 if st.session_state['page'] == 'main':
-    st.title("What Should I Watch")
+    st.title("What Should I Watch?")
 
     genres = st.text_input("Which genres interest you?", placeholder='Thriller, Horror, but less jump scares')
     streaming_services = st.text_input("Which streaming services do you have access to?", placeholder="Max, Hulu")
